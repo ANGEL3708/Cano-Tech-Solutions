@@ -5,10 +5,12 @@ const cop = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',
 const waUrl = t => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(t)}`;
 const safeImg = u => /^https?:\/\//i.test(u||'') ? u : 'https://placehold.co/400x300/e3eaee/52666e?text=Sin+imagen';
 function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2600)}
-function bindWa(){document.querySelectorAll('.wa-link').forEach(a=>a.href=waUrl(a.dataset.msg||'Hola CanoTech'))}
+function bindWa(){document.querySelectorAll('.wa-link').forEach(a=>a.href=waUrl(a.dataset.msg||'Hola Cano Tech Solutions'))}
 
 const configured = !SUPABASE_URL.startsWith('TU_') && !SUPABASE_KEY.startsWith('TU_');
-const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const libOk = typeof window.supabase !== 'undefined';
+if(configured && !libOk) console.error('No cargó la librería de Supabase (CDN).');
+const sb = (configured && libOk) ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 /* ============ SITIO PÚBLICO ============ */
 const COLORS = ['var(--orange)','var(--blue)','var(--green)','var(--brown)'];
@@ -39,12 +41,12 @@ function renderProducts(){
   $('productsGrid').innerHTML = list.length ? list.map(p=>`
     <article class="prod">
       <img src="${esc(safeImg(p.image_url))}" alt="${esc(p.name)}" loading="lazy">
-      <div class="b">
-        <span class="cat">${esc(p.category)}</span>
-        <h3>${esc(p.name)}</h3><p>${esc(p.description)}</p>
-        <div class="price">${cop(p.price)}</div>
-        <a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waUrl('Hola CanoTech, me interesa: '+p.name+' ('+cop(p.price)+')')}">Consultar por WhatsApp</a>
-      </div>
+      <h3>${esc(p.name)}</h3>
+      <div class="sku">REF: CT-${String(p.id).padStart(4,'0')}</div>
+      <div class="meta">✓ ${esc(p.category)} · Disponible</div>
+      <p class="desc">${esc(p.description)}</p>
+      <div class="price">${cop(p.price)}</div>
+      <a class="btn btn-navy" target="_blank" rel="noopener" href="${waUrl('Hola Cano Tech Solutions, me interesa: '+p.name+' (REF CT-'+String(p.id).padStart(4,'0')+', '+cop(p.price)+')')}">Consultar</a>
     </article>`).join('') : '<p class="empty">Aún no hay productos disponibles. Escríbenos y te ayudamos a conseguirlo.</p>';
 }
 $('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b){FILTER=b.dataset.c;renderProducts()}});
@@ -88,10 +90,10 @@ $('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const m=$('loginMsg'); m.className='msg';
   if(Date.now()<lockUntil){ m.textContent='Demasiados intentos. Espera 1 minuto.'; m.classList.add('err'); return; }
-  if(!sb){ m.textContent='Configura primero SUPABASE_URL y SUPABASE_KEY.'; m.classList.add('err'); return; }
+  if(!sb){ m.textContent=libOk?'Configura primero SUPABASE_URL y SUPABASE_KEY.':'No cargó la librería de Supabase. Recarga con Ctrl+F5 o desactiva el bloqueo de Brave Shields.'; m.classList.add('err'); return; }
   m.textContent='Verificando…';
   const {error}=await sb.auth.signInWithPassword({email:$('lEmail').value.trim(),password:$('lPass').value});
-  if(error){ if(++fails>=5){ lockUntil=Date.now()+60000; fails=0; } m.textContent='Correo o contraseña incorrectos.'; m.classList.add('err'); return; }
+  if(error){ if(++fails>=5){ lockUntil=Date.now()+60000; fails=0; } m.textContent='No se pudo entrar: '+error.message; m.classList.add('err'); return; }
   fails=0;
   $('lPass').value=''; m.textContent=''; refreshAuthUI();
 });
@@ -152,3 +154,8 @@ $('dash').addEventListener('click', async e=>{
 $('yr').textContent = new Date().getFullYear();
 bindWa();
 loadPublic();
+
+/* Flechas del carrusel */
+document.querySelectorAll('.car-btn').forEach(b=>b.addEventListener('click',()=>{
+  const t=$('productsGrid'); t.scrollBy({left:(b.classList.contains('next')?1:-1)*(t.clientWidth*.8),behavior:'smooth'});
+}));
