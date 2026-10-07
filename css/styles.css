@@ -24,15 +24,14 @@ h2{font-size:clamp(1.7rem,4vw,2.4rem);margin-bottom:12px}
 .btn-sm{padding:8px 14px;font-size:.9rem}
 .btn-red{background:#c62828;color:#fff}
 
-/* Header */
-header{position:sticky;top:0;z-index:50;background-color: rgb(214, 198, 180);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.bar{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
-.logo{display:flex;align-items:center;gap:10px;font:800 1.35rem var(--f1);text-decoration:none}
-nav{display:none;gap:22px}
-nav a{text-decoration:none;font-weight:500}
-nav a:hover{color:var(--orange)}
-@media(min-width:860px){nav{display:flex}}
-.bar .btn{padding:9px 16px;font-size:.9rem}
+/* Encabezado café con leche */
+html{scroll-padding-top:88px}
+header{background:#d6c6b4;border-bottom:1px solid rgba(54,36,24,.18)}
+.bar{height:76px}
+.logo img{height:62px;width:auto}
+header nav a{color:#3a2618}
+header nav a:hover{color:#8a4b1f}
+@media(max-width:520px){.bar{height:68px}.logo img{height:54px}}
 
 /* Hero */
 .hero{padding:72px 0 88px;background:var(--ink);color:#fff;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px}
