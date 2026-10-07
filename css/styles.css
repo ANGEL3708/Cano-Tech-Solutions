@@ -25,7 +25,7 @@ h2{font-size:clamp(1.7rem,4vw,2.4rem);margin-bottom:12px}
 .btn-red{background:#c62828;color:#fff}
 
 /* Header */
-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:50;background-color: rgb(214, 198, 180);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .bar{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
 .logo{display:flex;align-items:center;gap:10px;font:800 1.35rem var(--f1);text-decoration:none}
 nav{display:none;gap:22px}
