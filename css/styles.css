@@ -145,3 +145,12 @@ td img{width:48px;height:48px;object-fit:cover;border-radius:8px}
 .logo{font-size:1.05rem;line-height:1.1}
 @media(min-width:600px){.logo{font-size:1.25rem}}
 @media(max-width:520px){.bar .btn{padding:8px 12px;font-size:.8rem}.logo svg{width:28px;height:28px}}
+
+/* Header oscuro con logo */
+html{scroll-padding-top:88px}
+header{background:#000;border-bottom:1px solid rgba(255,255,255,.12)}
+.bar{height:76px}
+.logo img{height:62px;width:auto}
+header nav a{color:#dfe7f1}
+header nav a:hover{color:#6ea0ff}
+@media(max-width:520px){.bar{height:68px}.logo img{height:54px}}
