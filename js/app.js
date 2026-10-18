@@ -42,17 +42,58 @@ function renderProducts(){
     <article class="prod">
       <img src="${esc(safeImg(p.image_url))}" alt="${esc(p.name)}" loading="lazy">
       <h3>${esc(p.name)}</h3>
-      <div class="sku">REF: CT-${String(p.id).padStart(4,'0')}</div>
-      <div class="meta">✓ ${esc(p.category)} · Disponible</div>
+      <div class="sku">REF: ${esc(p.ref)}</div>
+      <div class="meta">${stockLine(p)}</div>
       <p class="desc">${esc(p.description)}</p>
       <div class="price">${cop(p.price)}</div>
-      <a class="btn btn-navy" target="_blank" rel="noopener" href="${waUrl('Hola Cano Tech Solutions, me interesa: '+p.name+' (REF CT-'+String(p.id).padStart(4,'0')+', '+cop(p.price)+')')}">Consultar</a>
+      <a class="btn btn-navy" target="_blank" rel="noopener" href="${waUrl('Hola Cano Tech Solutions, me interesa: '+p.name+' (REF '+p.ref+', '+cop(p.price)+')')}">Consultar</a>
     </article>`).join('') : '<p class="empty">Aún no hay productos disponibles. Escríbenos y te ayudamos a conseguirlo.</p>';
 }
 $('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b){FILTER=b.dataset.c;renderProducts()}});
 
+/* ---- Catálogo desde Google Sheets (opcional) ---- */
+const SHEET_URL = (typeof SHEET_CSV_URL!=='undefined' && SHEET_CSV_URL) || '';
+const stockLine = p => p.stock===0 ? `✕ ${esc(p.category)} · Agotado`
+  : (p.stock>0 && p.stock<=3) ? `✓ ${esc(p.category)} · Últimas ${p.stock} unidades`
+  : `✓ ${esc(p.category)} · Disponible`;
+function parseCSV(t){
+  const rows=[]; let r=[], f='', q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){f+='"';i++} else q=false } else f+=c }
+    else if(c==='"') q=true;
+    else if(c===','){ r.push(f); f='' }
+    else if(c==='\n'){ r.push(f); rows.push(r); r=[]; f='' }
+    else if(c!=='\r') f+=c;
+  }
+  if(f!==''||r.length){ r.push(f); rows.push(r) }
+  return rows;
+}
+const norm = s => String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function driveImg(u){
+  u=(u||'').trim();
+  const m=u.match(/\/d\/([\w-]{20,})/)||u.match(/[?&]id=([\w-]{20,})/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w600` : u;
+}
+async function loadSheet(){
+  const res=await fetch(SHEET_URL); if(!res.ok) throw new Error('sheet');
+  const rows=parseCSV(await res.text()); const head=rows.shift().map(norm);
+  return rows.filter(r=>r.some(x=>x.trim())).map((r,i)=>{
+    const g=n=>{const k=head.indexOf(n); return k<0?'':(r[k]||'').trim()};
+    const st=g('stock');
+    return { name:g('nombre'), category:g('categoria')||'Otros', price:Number(g('precio').replace(/[^\d]/g,''))||0,
+      description:g('descripcion'), image_url:driveImg(g('imagen')), stock:st===''?null:Number(st),
+      active:!['no','0','false','inactivo'].includes(norm(g('activo'))), ref:g('codigo')||'CT-'+String(i+1).padStart(4,'0') };
+  }).filter(p=>p.name&&p.active);
+}
+
 async function loadPublic(){
   renderServices(DEFAULT_SERVICES);
+  if(SHEET_URL){
+    try{ PRODUCTS = await loadSheet(); renderProducts(); }
+    catch(e){ $('productsGrid').innerHTML='<p class="empty">No pudimos cargar el catálogo. Intenta de nuevo más tarde.</p>'; }
+    if(sb){ const s=await sb.from('services').select('*').order('sort_order'); if(!s.error && s.data.length) renderServices(s.data); }
+    return;
+  }
   if(!sb){ $('productsGrid').innerHTML='<p class="empty">Configura SUPABASE_URL y SUPABASE_KEY para mostrar el catálogo.</p>'; return; }
   const [s,p] = await Promise.all([
     sb.from('services').select('*').order('sort_order'),
@@ -60,7 +101,7 @@ async function loadPublic(){
   ]);
   if(!s.error && s.data.length) renderServices(s.data);
   if(p.error){ $('productsGrid').innerHTML='<p class="empty">No pudimos cargar el catálogo. Intenta de nuevo más tarde.</p>'; return; }
-  PRODUCTS = p.data; renderProducts();
+  PRODUCTS = p.data.map(x=>({...x, ref:'CT-'+String(x.id).padStart(4,'0'), stock:null})); renderProducts();
 }
 
 /* ============ ADMIN ============ */
